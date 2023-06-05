@@ -5,28 +5,136 @@
     <title>EM Test</title>
     <script type="text/javascript" src="./gravity_lib.js"></script>
     <script type="text/javascript">
+        function randomInRange(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function randomPositionInAnnulus(r_inner, r_outer) {
+            // # Sample from a normal annulus with radii r_inner and r_outer.
+            rad = Math.sqrt(randomInRange(r_inner * r_inner, r_outer * r_outer))
+            angle = randomInRange(-Math.PI, Math.PI)
+            return new Module.Vector2(rad * Math.cos(angle),rad * Math.sin(angle));
+        }
+
+        function transformToScreenSpace(x, y, width, height) {
+            const xPrime = (x + 0.5 * width);
+            const yPrime = (y + 0.5 * height);
+            // const newV = new Module.Vector2(xPrime, yPrime);
+            // console.log(xPrime, yPrime, newV.at(0), newV.at(1));
+            return new Module.Vector2(xPrime, yPrime);
+        }
+
         Module['onRuntimeInitialized'] = function() {
-            var v = new Module.Vector2(1, 5);
-            console.log(`Vector2 created: (x, y) = (${v.x}, ${v.y})`);
+            // Setup the canvas
+            const container = document.getElementById("container");
+            const canvas = document.getElementById("display");            
+            const ctx = canvas.getContext('2d');
+            ctx.canvas.width  = container.clientWidth;
+            ctx.canvas.height = container.clientHeight;
+            window.addEventListener("resize", (e)=> {
+                ctx.canvas.width  = container.clientWidth;
+                ctx.canvas.height = container.clientHeight;
+            })
+
+            // Initialise the sim
+            const numBodies = 50;
+            const sim = new Module.Simulation();
+            // Add a large central body
+            sim.addBody(1000.0, 5.0, new Module.Vector2(0.0, 0.0), new Module.Vector2(0.0, 0.0), false);
+            // Add a smaller ring of bodies
+            for (var i = 0; i < numBodies - 1; i++)
+            {
+                // double mass, double radius, Vector2 position, Vector2 velocity, bool isStatic
+                const pos = randomPositionInAnnulus(200, 275);
+                sim.addBody(1.0, 1.0, pos, new Module.Vector2(0.0, 0.0), false);
+            }
+
+            // Setup the animation sequence
+            function animate() {
+                console.log("Drawing frame...");
+                // Clear the screen
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Update sim and draw stuff here
+                sim.update();
+
+                // Draw shizz
+                var bodies = sim.bodies();
+                // console.log(bodies);
+                for (var i = 0; i < bodies.size(); i++) {
+                    const body = bodies.get(i);
+                    const bodyPos = body.position();
+                    const x = bodyPos.at(0);
+                    const y = bodyPos.at(1);
+                    const r = body.radius();
+                    // console.log("Body Position: ", x, y, r);
+                    const screenPos = transformToScreenSpace(x, y, ctx.canvas.width, ctx.canvas.height);
+                    const px = screenPos.at(0);
+                    const py = screenPos.at(1);
+                    // console.log("Body Position: ", px, py);
+                    ctx.beginPath();
+                    ctx.arc(px, py, 5 * r, 0, 2 * Math.PI);
+                    ctx.strokeStyle = "#000000";
+                    ctx.stroke();
+                }
+
+                requestAnimationFrame(animate);
+            }
+
+            // Start the sim
+            animate();
         }
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         html {
             font-family: "Inter";
+            display: flex;
+            height: 100%;
+            width: 100%;
+        }
+        body {
+            display: flex;
+            height: 100%;
+            width: 100%;
+            margin: 0px;
+        }
+        .outlined {
+            outline: black 1px solid;
         }
         .center {
             display: flex; 
             justify-content: center; 
             align-items: center;
             text-align: center;
-            min-height: 100vh;
+            width: 100%;
+        }
+        .bordered {
+            margin: 5px;
+        }
+        .controls {
+            position: absolute;
+            border-radius: 3px;
+            background-color: darkgray;
+            margin: 10px;
+            padding: 5px;
+        }
+        .btn {
+            text-align: center;
+            line-height: 40px;
+            font-size: x-large;
+            border: none;
+            background-color: white;
         }
     </style>
 </head>
 <body>
-    <div class="center">
-        <p >Check browser console...</p>
+    <div id="container" class="center bordered">
+        <canvas class="outlined" id="display"></canvas>
+    </div>
+    <div class="controls">
+        <button class="btn">&#x23F5;</button>
+        <button class="btn">&#x23F8;</button>
     </div>
 </body>
 </html>
