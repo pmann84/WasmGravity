@@ -37,9 +37,9 @@
             })
 
             // Initialise the sim
-            const numBodies = 100;
+            const numBodies = 500;
             const sim = new Module.Simulation();
-            sim.setG(2000);
+            sim.setG(500);
 
             // Setup an oscillating pair of bodies
             // sim.addBody(100, 1.0, new Module.Vector2(150, 0),  new Module.Vector2(0, -300), false);
@@ -52,7 +52,7 @@
             {
                 const pos = randomPositionInAnnulus(100, 175);
                 const mass = randomInRange(25.0, 75.0);
-                const yVel = randomInRange(-300, 300);
+                const yVel = randomInRange(-500, 500);
                 // double mass, double radius, Vector2 position, Vector2 velocity, bool isStatic
                 sim.addBody(mass, 0.5, pos, new Module.Vector2(0.0, yVel), false);
             }
