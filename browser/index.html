@@ -37,21 +37,29 @@
             })
 
             // Initialise the sim
-            const numBodies = 50;
+            const numBodies = 100;
             const sim = new Module.Simulation();
+            sim.setG(2000);
+
+            // Setup an oscillating pair of bodies
+            // sim.addBody(100, 1.0, new Module.Vector2(150, 0),  new Module.Vector2(0, -300), false);
+            // sim.addBody(100, 1.0, new Module.Vector2(-150, 0),  new Module.Vector2(0, 300), false);
+
             // Add a large central body
-            sim.addBody(1000.0, 5.0, new Module.Vector2(0.0, 0.0), new Module.Vector2(0.0, 0.0), false);
+            // sim.addBody(1e5, 5.0, new Module.Vector2(0.0, 0.0), new Module.Vector2(0.0, 0.0), false);
             // Add a smaller ring of bodies
             for (var i = 0; i < numBodies - 1; i++)
             {
+                const pos = randomPositionInAnnulus(100, 175);
+                const mass = randomInRange(25.0, 75.0);
+                const yVel = randomInRange(-300, 300);
                 // double mass, double radius, Vector2 position, Vector2 velocity, bool isStatic
-                const pos = randomPositionInAnnulus(200, 275);
-                sim.addBody(1.0, 1.0, pos, new Module.Vector2(0.0, 0.0), false);
+                sim.addBody(mass, 0.5, pos, new Module.Vector2(0.0, yVel), false);
             }
 
             // Setup the animation sequence
             function animate() {
-                console.log("Drawing frame...");
+                // console.log("Drawing frame...");
                 // Clear the screen
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 

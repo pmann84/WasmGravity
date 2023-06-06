@@ -127,8 +127,8 @@ Vector2 Body::ForceExertedBy(const Body& body, double G) const
     auto suppliedBodyPos = body.Position();
     auto currentBodyPos = Position();
     auto distVector = suppliedBodyPos - currentBodyPos; // THIS LINE IS SLOOOOOOOOW
-    distVector.Normalise();
-    auto forceAdd = SoftenedGravitationalForce(distVector, body.Mass(), G, 0.01)*(1.0/Mass())*distVector; // THIS LINE IS SLOOOOOOOOOW
-    //auto forceAdd = GravitationalForce(distVector, body.Mass(), G)*(1.0 / Mass())*distVector; // THIS LINE IS SLOOOOOOOOOW
+//    const auto force = SoftenedGravitationalForce(distVector, body.Mass(), G, 0.01);
+    const auto force = GravitationalForce(distVector, body.Mass(), G);
+    auto forceAdd = force * (1.0 / Mass()) * distVector; // THIS LINE IS SLOOOOOOOOOW
     return forceAdd;
 }

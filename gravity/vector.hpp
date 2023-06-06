@@ -1,6 +1,8 @@
 #pragma once
 
 #include <array>
+#include <iostream>
+
 #include "math.h"
 
 #include "vector_exc.hpp"
@@ -179,6 +181,9 @@ public:
         return *this;
     }
 
+    // Stream operator (for printing)
+    friend std::ostream& operator<<(std::ostream& os, const Vector<TYPE, DIM>& vector);
+
     // Comparison operators
     // TODO: Implement ==
     // TODO: Implement !=
@@ -260,6 +265,17 @@ private:
     std::array<TYPE, DIM> m_data;
 
 };
+
+template<class TYPE, unsigned int DIM>
+std::ostream& operator<<(std::ostream& os, const Vector<TYPE, DIM>& vector)
+{
+    os << "[";
+    for (auto it = vector.begin(); it != vector.end(); it++)
+    {
+        os << *it << ", ";
+    }
+    os << "]";
+}
 
 typedef Vector<double, 2> Vector2;
 typedef Vector<double, 3> Vector3;

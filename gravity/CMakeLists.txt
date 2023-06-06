@@ -15,4 +15,4 @@ add_custom_command(TARGET gravity_lib POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy
         "$<TARGET_FILE_DIR:gravity_lib>/gravity_lib.wasm"
         "${CMAKE_SOURCE_DIR}/browser/gravity_lib.wasm"
-        COMMENT "Copying JS to output directory")
+        COMMENT "Copying WASM to output directory")

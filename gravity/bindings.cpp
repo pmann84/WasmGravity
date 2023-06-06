@@ -20,7 +20,10 @@ EMSCRIPTEN_BINDINGS(Gravity) {
             .function("pause", &Simulation::Pause)
             .function("isPaused", &Simulation::IsPaused)
             .function("bodyCount", &Simulation::BodyCount)
-            .function("bodies", &Simulation::Bodies);
+            .function("bodies", &Simulation::Bodies)
+            .function("getG", emscripten::select_overload<double() const>(&Simulation::G))
+            .function("setG", emscripten::select_overload<void(double)>(&Simulation::G))
+            .function("setGWithScales", emscripten::select_overload<void(double, double, double)>(&Simulation::G));
 
     emscripten::register_vector<Body>("BodyVector");
 }
@@ -29,10 +32,6 @@ EMSCRIPTEN_BINDINGS(Gravity) {
 //    void AddBody(double mass, double radius, Vector2 position, bool isStatic = false);
 //    void AddBody(double mass, double radius, Vector2 position, Vector2 velocity, Vector3 colour, bool isStatic = false);
 //    void AddBodies(std::vector<Body> bodies);
-//    double G() const;
-//    void G(double g);
-//    void G(double massScale, double timeScale, double lengthScale);
 //    double Energy() const;
 //    Vector2 AngularMomentum() const;
 //    Vector2 CalculateTotalForceOnBody(const Body& body);
-//    std::vector<Body> Bodies() const;
