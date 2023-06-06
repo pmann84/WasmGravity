@@ -91,6 +91,9 @@ Vector2 Simulation::CalculateTotalForceOnBody(const Body& body)
 
 void Simulation::Update()
 {
+    // Don't do anything if we are paused
+    if (m_bPaused) return;
+
     auto intMethod = IntegrationMethod::Leapfrog;
 
     Vector2 force_agg, new_force_agg;

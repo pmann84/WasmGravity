@@ -13,7 +13,7 @@
             // # Sample from a normal annulus with radii r_inner and r_outer.
             rad = Math.sqrt(randomInRange(r_inner * r_inner, r_outer * r_outer))
             angle = randomInRange(-Math.PI, Math.PI)
-            return new Module.Vector2(rad * Math.cos(angle),rad * Math.sin(angle));
+            return { angle: angle, position: new Module.Vector2(rad * Math.cos(angle),rad * Math.sin(angle)) };
         }
 
         function transformToScreenSpace(x, y, width, height) {
@@ -25,6 +25,27 @@
         }
 
         Module['onRuntimeInitialized'] = function() {
+            // Initialise the sim
+            const numBodies = 750;
+            const sim = new Module.Simulation();
+            sim.setG(500);
+            sim.pause();
+
+            // Control setup 
+            var playPauseButton = document.querySelector('.btn');
+            playPauseButton.addEventListener('click', () => {
+                if (playPauseButton.classList.contains('play')) {
+                    // PAUSE SIM!
+                    playPauseButton.classList.remove('play');
+                    playPauseButton.classList.add('paused');
+                } else {
+                    // PLAY SIM!
+                    playPauseButton.classList.add('play');
+                    playPauseButton.classList.remove('paused');
+                }
+                sim.pause();
+            })
+
             // Setup the canvas
             const container = document.getElementById("container");
             const canvas = document.getElementById("display");            
@@ -36,25 +57,21 @@
                 ctx.canvas.height = container.clientHeight;
             })
 
-            // Initialise the sim
-            const numBodies = 500;
-            const sim = new Module.Simulation();
-            sim.setG(500);
-
             // Setup an oscillating pair of bodies
             // sim.addBody(100, 1.0, new Module.Vector2(150, 0),  new Module.Vector2(0, -300), false);
             // sim.addBody(100, 1.0, new Module.Vector2(-150, 0),  new Module.Vector2(0, 300), false);
 
             // Add a large central body
-            // sim.addBody(1e5, 5.0, new Module.Vector2(0.0, 0.0), new Module.Vector2(0.0, 0.0), false);
+            sim.addBody(1e4, 5.0, new Module.Vector2(0.0, 0.0), new Module.Vector2(0.0, 0.0), true);
             // Add a smaller ring of bodies
             for (var i = 0; i < numBodies - 1; i++)
             {
-                const pos = randomPositionInAnnulus(100, 175);
+                const { angle: angle, position: pos } = randomPositionInAnnulus(250, 450);
                 const mass = randomInRange(25.0, 75.0);
-                const yVel = randomInRange(-500, 500);
+                const velMultiplier = randomInRange(4000, 4050);
+                const vel = new Module.Vector2(-Math.sin(angle) * velMultiplier, Math.cos(angle) * velMultiplier);
                 // double mass, double radius, Vector2 position, Vector2 velocity, bool isStatic
-                sim.addBody(mass, 0.5, pos, new Module.Vector2(0.0, yVel), false);
+                sim.addBody(mass, 0.5, pos, vel, false);
             }
 
             // Setup the animation sequence
@@ -84,7 +101,14 @@
                     ctx.arc(px, py, 5 * r, 0, 2 * Math.PI);
                     ctx.strokeStyle = "#000000";
                     ctx.stroke();
+
+                    // Cleanup after each loop iteration
+                    // body.delete();
+                    // bodyPos.delete();
+                    // transformToScreenSpace.delete();
                 }
+
+                bodies.delete();
 
                 requestAnimationFrame(animate);
             }
@@ -128,12 +152,19 @@
             padding: 5px;
         }
         .btn {
-            text-align: center;
-            line-height: 40px;
             font-size: x-large;
             border: none;
-            background-color: white;
+            background: white;
+            padding-bottom: 5px;
         }
+        .btn:after {
+            content: '\23F5';
+        }
+
+        .btn.paused:after {
+            content: '\23F8';
+        }
+
     </style>
 </head>
 <body>
@@ -141,8 +172,7 @@
         <canvas class="outlined" id="display"></canvas>
     </div>
     <div class="controls">
-        <button class="btn">&#x23F5;</button>
-        <button class="btn">&#x23F8;</button>
+        <button class="btn play"></button>
     </div>
 </body>
 </html>
