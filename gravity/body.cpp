@@ -117,18 +117,20 @@ double Body::SoftenedGravitationalForce(const Body& body, double G, double softe
 double Body::SoftenedGravitationalForce(Vector2& distBetweenBodies, float bodyMass, double G, double softening) const
 {
     auto normalisedDistToBody = distBetweenBodies.Norm();
-    double denom = std::pow((normalisedDistToBody*normalisedDistToBody - softening*softening), 1.5);
+    // double denom = std::pow((normalisedDistToBody*normalisedDistToBody - softening*softening), 1.5);
+    double denom = normalisedDistToBody*normalisedDistToBody + softening;
     return (G*bodyMass*Mass()) / denom;
 }
 
-Vector2 Body::ForceExertedBy(const Body& body, double G) const
+Vector2 Body::ForceExertedBy(const Body& body, double G, bool soften) const
 {
     // MINIMISE CALL TO DistVectToBody - the calculation of distance takes aaaaages, so reduce this
     auto suppliedBodyPos = body.Position();
     auto currentBodyPos = Position();
     auto distVector = suppliedBodyPos - currentBodyPos; // THIS LINE IS SLOOOOOOOOW
-//    const auto force = SoftenedGravitationalForce(distVector, body.Mass(), G, 0.01);
-    const auto force = GravitationalForce(distVector, body.Mass(), G);
+    const auto force = soften ?
+              SoftenedGravitationalForce(distVector, body.Mass(), G, 0.01)
+            : GravitationalForce(distVector, body.Mass(), G);
     auto forceAdd = force * (1.0 / Mass()) * distVector; // THIS LINE IS SLOOOOOOOOOW
     return forceAdd;
 }

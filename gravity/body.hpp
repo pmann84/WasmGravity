@@ -46,7 +46,7 @@ public:
     double GravitationalForce(Vector2& distBetweenBodies, float bodyMass, double G) const;
     double SoftenedGravitationalForce(const Body& body, double G, double softening) const;
     double SoftenedGravitationalForce(Vector2& distBetweenBodies, float bodyMass, double G, double softening) const;
-    Vector2 ForceExertedBy(const Body& body, double G) const;
+    Vector2 ForceExertedBy(const Body& body, double G, bool soften = false) const;
 
     void operator=(const Body& body)
     {

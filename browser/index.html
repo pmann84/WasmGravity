@@ -19,20 +19,17 @@
         function transformToScreenSpace(x, y, width, height) {
             const xPrime = (x + 0.5 * width);
             const yPrime = (y + 0.5 * height);
-            // const newV = new Module.Vector2(xPrime, yPrime);
-            // console.log(xPrime, yPrime, newV.at(0), newV.at(1));
-            return new Module.Vector2(xPrime, yPrime);
+            return { x: xPrime, y: yPrime };
         }
 
         Module['onRuntimeInitialized'] = function() {
             // Initialise the sim
-            const numBodies = 1000;
             const sim = new Module.Simulation();
-            sim.setG(500);
+            sim.soften(true);
             sim.pause();
 
             // Control setup 
-            var playPauseButton = document.querySelector('.btn');
+            var playPauseButton = document.getElementById('playPauseBtn');
             playPauseButton.addEventListener('click', () => {
                 if (playPauseButton.classList.contains('play')) {
                     // PAUSE SIM!
@@ -46,6 +43,17 @@
                 sim.pause();
             })
 
+            var resetButton = document.getElementById('resetBtn');
+            resetButton.addEventListener('click', () => {
+                sim.reset();
+            })
+
+            let followCenterOfMass = true;
+            var followCenterToggle = document.getElementById('followCenter');
+            followCenterToggle.addEventListener('change', () => {
+                followCenterOfMass = !followCenterOfMass;
+            })
+
             // Setup the canvas
             const container = document.getElementById("container");
             const canvas = document.getElementById("display");            
@@ -57,29 +65,78 @@
                 ctx.canvas.height = container.clientHeight;
             })
 
-            // Setup an oscillating pair of bodies
+            // // Setup an oscillating pair of bodies
+            // sim.setG(5000);
+            // sim.setDt(0.01);
             // sim.addBody(100, 1.0, new Module.Vector2(150, 0),  new Module.Vector2(0, -300), false);
             // sim.addBody(100, 1.0, new Module.Vector2(-150, 0),  new Module.Vector2(0, 300), false);
 
-            // Add a large central body
-            sim.addBody(1e4, 5.0, new Module.Vector2(0.0, 0.0), new Module.Vector2(0.0, 0.0), true);
-            // Add a smaller ring of bodies
-            for (var i = 0; i < numBodies - 1; i++)
-            {
-                const { angle: angle, position: pos } = randomPositionInAnnulus(250, 450);
-                const mass = randomInRange(25.0, 75.0);
-                const velMultiplier = randomInRange(4000, 4050);
-                const vel = new Module.Vector2(-Math.sin(angle) * velMultiplier, Math.cos(angle) * velMultiplier);
-                // double mass, double radius, Vector2 position, Vector2 velocity, bool isStatic
-                sim.addBody(mass, 0.5, pos, vel, false);
-            }
+            // // Setup 3 bodies
+            // sim.setG(5000);
+            // sim.setDt(0.01);
+            // sim.addBody(100, 1.0, new Module.Vector2(150, 0),  new Module.Vector2(0, -300), false);
+            // sim.addBody(100, 1.0, new Module.Vector2(-150, 0),  new Module.Vector2(0, 300), false);
+            // sim.addBody(100, 1.0, new Module.Vector2(0, 150),  new Module.Vector2(300, 0), false);
+
+            // Setup 4 bodies
+            sim.setG(5000);
+            sim.setDt(0.01);
+            const initRadius = 250;
+            const initVel = 150;
+            sim.addBody(100, 1.0, new Module.Vector2(initRadius, 0),  new Module.Vector2(0, -initVel), false);
+            sim.addBody(100, 1.0, new Module.Vector2(-initRadius, 0),  new Module.Vector2(0, initVel), false);
+            sim.addBody(100, 1.0, new Module.Vector2(0, initRadius),  new Module.Vector2(initVel, 0), false);
+            sim.addBody(100, 1.0, new Module.Vector2(0, -initRadius),  new Module.Vector2(-initVel, 0), false);
+
+            // Circle of bodies
+            // sim.setG(5000);
+            // sim.setDt(0.001);
+            // const numBodies = 2000;
+            // for (var i = 0; i < numBodies; i++)
+            // {
+            //     const { angle: angle, position: pos } = randomPositionInAnnulus(1, 500);
+            //     const mass = 1;
+            //     const velMultiplier = randomInRange(100, 100);
+            //     const vel = new Module.Vector2(-Math.sin(angle) * velMultiplier, Math.cos(angle) * velMultiplier);
+            //     // double mass, double radius, Vector2 position, Vector2 velocity, bool isStatic
+            //     sim.addBody(mass, 0.5, pos, vel, false);
+            // }
+
+            // Lots of bodies around a central massive object
+            // sim.setG(500);
+            // const numBodies = 1000;
+            // // Add a large central body
+            // sim.addBody(1e4, 5.0, new Module.Vector2(0.0, 0.0), new Module.Vector2(0.0, 0.0), true);
+            // // Add a smaller ring of bodies
+            // for (var i = 0; i < numBodies - 1; i++)
+            // {
+            //     const { angle: angle, position: pos } = randomPositionInAnnulus(350, 450);
+            //     const mass = randomInRange(25.0, 75.0);
+            //     const velMultiplier = randomInRange(4000, 4050);
+            //     const vel = new Module.Vector2(-Math.sin(angle) * velMultiplier, Math.cos(angle) * velMultiplier);
+            //     // double mass, double radius, Vector2 position, Vector2 velocity, bool isStatic
+            //     sim.addBody(mass, 0.5, pos, vel, false);
+            // }
+
+
+            // Trails
+            let displayTrails = true;
+            const maxTrails = 20;
+            const opacityReduction = 1.0 / maxTrails;
+            const bodyTrails = [];
+
+            var toggleTrails = document.getElementById('showTrails');
+            toggleTrails.addEventListener("change", () => {
+                displayTrails = !displayTrails;
+            })
 
             // Setup the animation sequence
             function animate() {
                 // console.log("Drawing frame...");
                 // Clear the screen
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+            
+                // console.log("Updating...");
                 // Update sim and draw stuff here
                 sim.update();
 
@@ -89,23 +146,52 @@
                 for (var i = 0; i < bodies.size(); i++) {
                     const body = bodies.get(i);
                     const bodyPos = body.position();
-                    const x = bodyPos.at(0);
-                    const y = bodyPos.at(1);
+                    let x = bodyPos.at(0);
+                    let y = bodyPos.at(1);
                     const r = body.radius();
+
+                    if (followCenterOfMass) {
+                        const CoM = sim.centerOfMass();
+                        x -= CoM.at(0);
+                        y -= CoM.at(1);
+                        CoM.delete();
+                    }
                     // console.log("Body Position: ", x, y, r);
                     const screenPos = transformToScreenSpace(x, y, ctx.canvas.width, ctx.canvas.height);
-                    const px = screenPos.at(0);
-                    const py = screenPos.at(1);
-                    // console.log("Body Position: ", px, py);
+
+                    // Update the trail for this body
+                    if (!bodyTrails[i]) {
+                        bodyTrails[i] = [];
+                    }
+                    bodyTrails[i].push(screenPos);
+                    if (bodyTrails[i].length > maxTrails) {
+                        bodyTrails[i].shift();
+                    }
+
+                    // Draw the trails
+                    if (displayTrails) {
+                        const trails = bodyTrails[i];
+                        if (trails.length > 0) {
+                            let opacity = 0.0;
+                            for (const trail of trails) {
+                                opacity += opacityReduction;
+                                ctx.beginPath();
+                                ctx.arc(trail.x, trail.y, 5 * r, 0, 2 * Math.PI);
+                                ctx.strokeStyle = `rgba(0, 0, 0, ${opacity})`;
+                                ctx.stroke();
+                            }
+                        }
+                    }
+
+                    // Draw the body
+                    // console.log(`Screen pos = ${screenPos.x}, ${screenPos.y}`);
                     ctx.beginPath();
-                    ctx.arc(px, py, 5 * r, 0, 2 * Math.PI);
+                    ctx.arc(screenPos.x, screenPos.y, 5 * r, 0, 2 * Math.PI);
                     ctx.strokeStyle = "#000000";
                     ctx.stroke();
-
                     // Cleanup after each loop iteration
-                    // body.delete();
-                    // bodyPos.delete();
-                    // transformToScreenSpace.delete();
+                    bodyPos.delete();
+                    body.delete();
                 }
 
                 bodies.delete();
@@ -160,10 +246,12 @@
         .btn:after {
             content: '\23F5';
         }
-
         .btn.paused:after {
             content: '\23F8';
         }
+        .btn.reset:after {
+            content: '\21BA';
+        };
 
     </style>
 </head>
@@ -172,7 +260,10 @@
         <canvas class="outlined" id="display"></canvas>
     </div>
     <div class="controls">
-        <button class="btn play"></button>
+        <button id="playPauseBtn" class="btn play"></button>
+        <button id="resetBtn" class="btn reset"></button>
+        <input type="checkbox" id="showTrails" name="showTrails" value="Trails" checked><label for="showTrails">Show Trails</label>
+        <input type="checkbox" id="followCenter" name="followCenter" value="Follow" checked><label for="followCenter">Follow</label>
     </div>
 </body>
 </html>

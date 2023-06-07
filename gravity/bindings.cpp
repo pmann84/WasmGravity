@@ -23,7 +23,11 @@ EMSCRIPTEN_BINDINGS(Gravity) {
             .function("bodies", &Simulation::Bodies)
             .function("getG", emscripten::select_overload<double() const>(&Simulation::G))
             .function("setG", emscripten::select_overload<void(double)>(&Simulation::G))
-            .function("setGWithScales", emscripten::select_overload<void(double, double, double)>(&Simulation::G));
+            .function("setGWithScales", emscripten::select_overload<void(double, double, double)>(&Simulation::G))
+            .function("soften", &Simulation::soften)
+            .function("getDt", emscripten::select_overload<double() const>(&Simulation::dt))
+            .function("setDt", emscripten::select_overload<void(double)>(&Simulation::dt))
+            .function("centerOfMass", &Simulation::centerOfMass);
 
     emscripten::register_vector<Body>("BodyVector");
 }

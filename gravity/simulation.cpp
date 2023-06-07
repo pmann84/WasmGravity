@@ -1,6 +1,6 @@
 ﻿#include "simulation.hpp"
 
-Simulation::Simulation() : m_nextId(0)
+Simulation::Simulation() : m_nextId(0), m_dt(0.001)
 {
     InitSimBounds();
 }
@@ -74,7 +74,7 @@ int Simulation::BodyCount() const
     return m_bodies.size();
 }
 
-Vector2 Simulation::CalculateTotalForceOnBody(const Body& body)
+Vector2 Simulation::CalculateTotalForceOnBody(const Body& body, bool soften)
 {
     Vector2 force_agg;
     for (auto forceFromBody : m_bodies)
@@ -83,7 +83,7 @@ Vector2 Simulation::CalculateTotalForceOnBody(const Body& body)
         if (body.Id() != forceFromBody.Id())
         {
             // Calculate the contribution of the force between the two bodies
-            force_agg += body.ForceExertedBy(forceFromBody, G());
+            force_agg += body.ForceExertedBy(forceFromBody, G(), soften);
         }
     }
     return force_agg;
@@ -105,11 +105,10 @@ void Simulation::Update()
             // Only calculate new position if body is not statics
             if (!body.Static())
             {
-                double dt;
                 Vector2 new_vel, new_pos;
                 Vector2 temp_vel, temp_pos;
 
-                dt = 0.001;
+                double dt = m_dt;
 
                 switch (intMethod)
                 {
@@ -117,7 +116,7 @@ void Simulation::Update()
                         // Euler
                         // v_n+1 = v_n + sum(F)*dt
                         // p_n+1 = p_n + v_n+1 *dt
-                        force_agg = CalculateTotalForceOnBody(body);
+                        force_agg = CalculateTotalForceOnBody(body, m_soften);
                         new_vel = body.Velocity() + force_agg*dt;
                         new_pos = body.Position() + new_vel*dt;
                         body.Acceleration(force_agg);
@@ -128,7 +127,7 @@ void Simulation::Update()
                         // Taylor Series
                         // v_n+1 = v_n + sum(F)*dt
                         // p_n+1 = p_n + v_n+1 *dt + 0.5*sum(F)*dt*dt
-                        force_agg = CalculateTotalForceOnBody(body);
+                        force_agg = CalculateTotalForceOnBody(body, m_soften);
                         new_vel = body.Velocity() + force_agg*dt;
                         new_pos = body.Position() + new_vel*dt + 0.5*force_agg*dt*dt;
                         body.Acceleration(force_agg);
@@ -142,7 +141,7 @@ void Simulation::Update()
                         // r_n+1 = r_n+0.5 + 0.5*dt*v_n+1
                         temp_pos = body.Position() + dt*0.5*body.Velocity();
                         body.Position(temp_pos);
-                        force_agg = CalculateTotalForceOnBody(body);
+                        force_agg = CalculateTotalForceOnBody(body, m_soften);
                         new_vel = body.Velocity() + dt*force_agg;
                         new_pos = temp_pos + 0.5*dt*new_vel;
                         body.Velocity(new_vel);
@@ -222,6 +221,34 @@ Vector2 Simulation::AngularMomentum() const
 const std::vector<Body>& Simulation::Bodies() const
 {
     return m_bodies;
+}
+
+void Simulation::soften(bool value)
+{
+    m_soften = value;
+}
+
+void Simulation::dt(double dt)
+{
+    m_dt = dt;
+}
+
+double Simulation::dt() const
+{
+    return m_dt;
+}
+
+Vector2 Simulation::centerOfMass() const
+{
+    // Get sum of position of all bodies * its mass / total mass
+    Vector2 CoM;
+    double totalMass = 0;
+    for (auto& body : m_bodies)
+    {
+        totalMass += body.Mass();
+        CoM += body.Position() * body.Mass();
+    }
+    return CoM * (1.0 / totalMass);
 }
 
 void GetTransformedPositions(double coord_x, double coord_y,

@@ -46,9 +46,16 @@ public:
     double G() const;
     void G(double g);
     void G(double massScale, double timeScale, double lengthScale);
+
+    void soften(bool value);
+
+    double dt() const;
+    void dt(double dt);
+
+    Vector2 centerOfMass() const;
+
     double Energy() const;
     Vector2 AngularMomentum() const;
-    Vector2 CalculateTotalForceOnBody(const Body& body);
 
     const std::vector<Body>& Bodies() const;
 
@@ -56,6 +63,8 @@ private:
     double m_gravConst;
     bool m_bPaused;
     bool m_bDrawVelVectors;
+    bool m_soften;
+    double m_dt;
 
     std::vector<Body> m_bodies;
     unsigned int m_nextId;
@@ -65,5 +74,6 @@ private:
     void InitSimBounds();
     void SetSimBounds(double xMin, double xMax, double yMin, double yMax);
 
+    Vector2 CalculateTotalForceOnBody(const Body& body, bool soften = false);
     void AddBody(Body& body);
 };
